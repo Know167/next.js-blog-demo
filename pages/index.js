@@ -11,40 +11,14 @@ import { metaTagsFragment, responsiveImageFragment } from "@/lib/fragments";
 export async function getStaticProps({ preview }) {
   const graphqlRequest = {
     query: `
-      {
-        site: _site {
-          favicon: faviconMetaTags {
-            ...metaTagsFragment
-          }
-        }
-        blog {
-          seo: _seoMetaTags {
-            ...metaTagsFragment
-          }
-        }
-        allPosts(orderBy: date_DESC, first: 20) {
-          title
-          slug
-          excerpt
-          date
-          coverImage {
-            responsiveImage(imgixParams: {fm: jpg, fit: crop, w: 2000, h: 1000 }) {
-              ...responsiveImageFragment
-            }
-          }
-          author {
-            name
-            picture {
-              responsiveImage(imgixParams: {fm: jpg, fit: crop, w: 100, h: 100, sat: -100}) {
-                ...responsiveImageFragment
-              }
-            }
-          }
-        }
+    allHomepages {
+      columns
+      margin
+      padding
+      bgcolor {
+        hex
       }
-
-      ${metaTagsFragment}
-      ${responsiveImageFragment}
+    }
     `,
     preview,
   };
@@ -68,12 +42,8 @@ export async function getStaticProps({ preview }) {
 
 export default function Index({ subscription }) {
   const {
-    data: { allPosts, site, blog },
+    data: { allHomepages },
   } = useQuerySubscription(subscription);
-
-  const heroPost = allPosts[0];
-  const morePosts = allPosts.slice(1);
-  const metaTags = blog.seo.concat(site.favicon);
 
   return (
     <>
@@ -81,17 +51,13 @@ export default function Index({ subscription }) {
         <Head>{renderMetaTags(metaTags)}</Head>
         <Container>
           <Intro />
-          {heroPost && (
-            <HeroPost
-              title={heroPost.title}
-              coverImage={heroPost.coverImage}
-              date={heroPost.date}
-              author={heroPost.author}
-              slug={heroPost.slug}
-              excerpt={heroPost.excerpt}
-            />
-          )}
-          {morePosts.length > 0 && <MoreStories posts={morePosts} />}
+          {allHomepages.map((i, index) => {
+            const columns = allHomepages[index].columns;
+            const padding = allHomepages[index].padding;
+            const margin = allHomepages[index].margin;
+            const bgcolor = allHomepages[index].bgcolor.hex;
+            return <HeroPost cols={columns} pad={padding} mar={margin} bgcolor={bgcolor}  />;
+          })}
         </Container>
       </Layout>
     </>
